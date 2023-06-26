@@ -40,8 +40,9 @@ def login():
     if request.method == 'POST':
         email = request.form['email']
         password = request.form['password']
-        if validate_credentials(email, password):
-            return redirect('/movies')
+        role = request.form['role']
+        if validate_credentials(email, password, role):
+            return redirect('/dash')
         else:
             return render_template('login.html', error_message='Invalid email or password')
     return render_template('login.html')
@@ -61,13 +62,36 @@ def register():
         if role == 'artist':
             genres = request.form.getlist('genres[]')
             description = request.form['description']
+            name = request.form['name']
             user_data['genres'] = genres
             user_data['description'] = description
+            user_data['name'] = name
             db.collection('artists').add(user_data)
         elif role == 'fan':
             db.collection('fans').add(user_data)
         return redirect('/login')
     return render_template('register.html')
+
+@app.route('/dash')
+def dashboard():
+    artists = []
+    artist_collection = db.collection('artists').get()
+    for artist in artist_collection:
+        artists.append(artist.to_dict())
+    return render_template('dash.html', artists=artists)
+
+@app.route('/artist/<name>', methods=['GET', 'POST'])
+def artist(name):
+    if request.method == 'POST':
+        artist_ref = db.collection('artists').where('name', '==', name).limit(1)
+        artist_docs = artist_ref.stream()
+        for doc in artist_docs:
+            artist = doc.to_dict()
+            artist_name = artist['name']
+            artist_description = artist['description']
+            artist_genres = artist['genres']
+            return render_template('artist.html', name=artist_name, description=artist_description, genres=artist_genres)
+    return render_template('dash.html')
 
 if __name__ == "__main__":
     app.run(port=5001, debug=True)

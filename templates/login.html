@@ -68,6 +68,10 @@
             color: #666;
             text-decoration: none;
         }
+
+        #role {
+            margin-bottom: 10px;
+        }
     </style>
 </head>
 <body>
@@ -81,6 +85,14 @@
             <input type="email" id="email" name="email" required>
             <label for="password">Password:</label>
             <input type="password" id="password" name="password" required>
+            <label for="role">Role:</label>
+            <select id="role" name="role" required onchange="toggleGenreField()">
+                <optgroup>
+                    <option disabled selected>Role</option>
+                    <option value="artist">Artist</option>
+                    <option value="fan">Fan</option>
+                </optgroup>
+            </select>
             <input type="submit" value="Login">
         </form>
     </div>
