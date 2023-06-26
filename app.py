@@ -1,9 +1,29 @@
 from flask import Flask, request, redirect, render_template
 import firebase_admin
+from flask_login import login_user, login_required, logout_user, LoginManager, UserMixin, current_user
 from firebase_admin import credentials, firestore
 import hashlib
 
+class User(UserMixin):
+    def __init__(self, user_id):
+        self.id = user_id
+        is_active = True
+    
+    def get_id(self):
+        return self.id
+
+config = {}
+config["SECRET_KEY"] = "123"
+
 app = Flask(__name__)
+app.config.from_mapping(config)
+login_manager = LoginManager()
+login_manager.login_view = "login"
+login_manager.init_app(app)
+@login_manager.user_loader
+def load_user(user_id):
+    user = User(user_id)
+    return user
 
 #firestore details
 cred = credentials.Certificate('training-project-388915-firebase-adminsdk-7tfwk-7384b5f0ef.json')
@@ -42,6 +62,8 @@ def login():
         password = request.form['password']
         role = request.form['role']
         if validate_credentials(email, password, role):
+            user = User(email)
+            login_user(user)
             return redirect('/dash')
         else:
             return render_template('login.html', error_message='Invalid email or password')
@@ -73,6 +95,7 @@ def register():
     return render_template('register.html')
 
 @app.route('/dash')
+@login_required
 def dashboard():
     artists = []
     artist_collection = db.collection('artists').get()
@@ -81,6 +104,7 @@ def dashboard():
     return render_template('dash.html', artists=artists)
 
 @app.route('/artist/<name>', methods=['GET', 'POST'])
+@login_required
 def artist(name):
     if request.method == 'POST':
         artist_ref = db.collection('artists').where('name', '==', name).limit(1)
@@ -90,7 +114,8 @@ def artist(name):
             artist_name = artist['name']
             artist_description = artist['description']
             artist_genres = artist['genres']
-            return render_template('artist.html', name=artist_name, description=artist_description, genres=artist_genres)
+            artist_email = artist['email']
+            return render_template('artist.html', name=artist_name, description=artist_description, genres=artist_genres, current_user=current_user, email=artist_email)
     return render_template('dash.html')
 
 if __name__ == "__main__":
