@@ -167,10 +167,10 @@ def upload_song():
         blob.patch()
     return redirect('/dash')
 
-@app.route('/artist/<name>/view_songs')
+@app.route('/artist/<name>/view_songs', methods=['POST'])
 @login_required
 def view_songs(name):
-    email = current_user.get_id()
+    email = request.form.get('email')
     bucket_name = re.sub(r'[^a-z0-9-_]', '', email.lower()) + '-songs'
     create_bucket_if_not_exists(bucket_name)
     storage_client = storage.Client.from_service_account_json('training-project-388915-firebase-adminsdk-7tfwk-7384b5f0ef.json')
@@ -190,10 +190,10 @@ def view_songs(name):
     return render_template('view_songs.html', name=name, songs=songs)
 
 
-@app.route('/artist/<name>/view_images')
+@app.route('/artist/<name>/view_images', methods=['POST'])
 @login_required
 def view_images(name):
-    email = current_user.get_id()
+    email = request.form.get('email')
     bucket_name = re.sub(r'[^a-z0-9-_]', '', email.lower()) + '-images'
     create_bucket_if_not_exists(bucket_name)
     storage_client = storage.Client.from_service_account_json('training-project-388915-firebase-adminsdk-7tfwk-7384b5f0ef.json')
@@ -211,6 +211,36 @@ def view_images(name):
         image['metadata'] = blob.metadata
         images.append(image)
     return render_template('view_images.html', name=name, images=images)
+
+@app.route('/post_message', methods=['POST'])
+def post_message():
+    message = request.form.get('message')
+    email = request.form.get('email')
+    current_datetime = datetime.datetime.now().isoformat()
+    query = db.collection('artists').where('email', '==', email)
+    artist_docs = query.get()
+    if artist_docs:
+        for artist_doc in artist_docs:
+            messages = artist_doc.get('messages') or []
+            messages.append({
+                'message': message,
+                'timestamp': current_datetime
+            })
+            artist_doc.reference.update({'messages': messages})
+    return redirect('/dash')
+
+@app.route('/artist/<name>/view_messages', methods=['POST'])
+def view_messages(name):
+    email = request.form.get('email')
+    query = db.collection('artists').where('email', '==', email)
+    artist_docs = query.get()
+    messages = []
+    if artist_docs:
+        for artist_doc in artist_docs:
+           if 'messages' in artist_doc.to_dict():
+                artist_messages = artist_doc.to_dict()['messages']
+                messages.extend(artist_messages)
+    return render_template('view_messages.html', messages=messages, name=name)
 
 if __name__ == "__main__":
     app.run(port=5001, debug=True)

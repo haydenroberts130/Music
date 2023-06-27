@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>View Messages</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f2f2f2;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .artist-container,
+        .message-container {
+            background-color: #fff;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: white;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            color: #333;
+            margin-top: 0;
+            text-align: center;
+        }
+
+        .message-container {
+            margin-bottom: 20px;
+        }
+
+        .message {
+            background-color: #f5f5f5;
+            padding: 10px;
+            border-radius: 5px;
+        }
+
+        .timestamp {
+            color: #888;
+            font-size: 12px;
+            margin-top: 5px;
+        }
+
+        .no-messages {
+            text-align: center;
+            color: #888;
+            margin-top: 20px;
+        }
+
+        .button-section {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .styled-button {
+            display: inline-block;
+            width: 200px;
+            margin: 0 10px;
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            text-align: center;
+            border-radius: 5px;
+        }
+
+        .styled-button:hover {
+            background-color: #0056b3;
+        }
+
+        .top-right {
+            position: absolute;
+            top: 90px;
+            right: 350px;
+            background-color: #f2f2f2;
+            padding: 10px;
+            border-radius: 5px;
+            text-decoration: none;
+        }
+
+        .home-link {
+            margin-left: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="artist-container">
+        <h1>{{ name|capitalize }}'s Messages</h1>
+        <a class="top-right home-link" href="/dash">Back to Dashboard</a>
+        {% if messages %}
+            {% for message in messages %}
+                <div class="message-container">
+                    <div class="message">{{ message['message'] }}</div>
+                    <div class="timestamp">{{ message['timestamp'] }}</div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <p class="no-messages">No messages found.</p>
+        {% endif %}
+    </div>
+</body>
+</html>

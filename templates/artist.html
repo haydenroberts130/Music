@@ -138,11 +138,26 @@
                 <input type="hidden" name="email" value="{{ email }}">
                 <input type="submit" value="Upload Song">
             </form>
+            <form action="/post_message" method="post">
+                <textarea name="message" placeholder="Post a message (limited to 200 characters)" maxlength="200" required></textarea><br>
+                <input type="hidden" name="email" value="{{ email }}">
+                <input type="submit" value="Post Message">
+            </form>
         </div>
         {% endif %}
         <div class="button-section">
-            <a href="/artist/{{ name }}/view_songs" class="styled-button">View Songs</a>
-            <a href="/artist/{{ name }}/view_images" class="styled-button">View Images</a>
+            <form action="/artist/{{ name }}/view_songs" method="post" style="display: inline;">
+                <input type="hidden" name="email" value="{{ email }}">
+                <button type="submit" class="styled-button">View Songs</button>
+            </form>
+            <form action="/artist/{{ name }}/view_images" method="post" style="display: inline;">
+                <input type="hidden" name="email" value="{{ email }}">
+                <button type="submit" class="styled-button">View Images</button>
+            </form>
+            <form action="/artist/{{ name }}/view_messages" method="post" style="display: inline;">
+                <input type="hidden" name="email" value="{{ email }}">
+                <button type="submit" class="styled-button">View Messages</button>
+            </form>
         </div>
         <script>
             function validateFileSize(form) {
