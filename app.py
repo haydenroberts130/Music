@@ -7,6 +7,7 @@ from google.cloud import storage
 import re
 from data import *
 from datetime import datetime, timedelta
+import datetime
 
 class User(UserMixin):
     def __init__(self, user_id):
@@ -216,15 +217,19 @@ def view_images(name):
 def post_message():
     message = request.form.get('message')
     email = request.form.get('email')
-    current_datetime = datetime.datetime.now().isoformat()
+    current_date_time = datetime.datetime.now()
+    formatted_date = current_date_time.strftime("%B %d, %Y %I:%M %p")
     query = db.collection('artists').where('email', '==', email)
     artist_docs = query.get()
     if artist_docs:
         for artist_doc in artist_docs:
-            messages = artist_doc.get('messages') or []
+            if 'messages' in artist_doc.to_dict():
+                messages = artist_doc.get('messages')
+            else:
+                messages = []
             messages.append({
                 'message': message,
-                'timestamp': current_datetime
+                'timestamp': formatted_date
             })
             artist_doc.reference.update({'messages': messages})
     return redirect('/dash')
