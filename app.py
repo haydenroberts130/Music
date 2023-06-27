@@ -1,10 +1,11 @@
 from flask import Flask, request, redirect, render_template
 import firebase_admin
-from flask_login import login_user, login_required, logout_user, LoginManager, UserMixin, current_user
+from flask_login import login_user, login_required, logout_user, LoginManager, current_user
 from firebase_admin import credentials, firestore
 import hashlib
 from google.cloud import storage
 import re
+from data import *
 
 class User(UserMixin):
     def __init__(self, user_id):
@@ -78,21 +79,15 @@ def register():
         password = request.form['password']
         role = request.form['role']
         hashed_password = hash_password(password)
-        user_data = {
-            'email': email,
-            'password': hashed_password,
-            'role': role
-        }
         if role == 'artist':
             genres = request.form.getlist('genres[]')
             description = request.form['description']
             name = request.form['name']
-            user_data['genres'] = genres
-            user_data['description'] = description
-            user_data['name'] = name
-            db.collection('artists').add(user_data)
+            artist = Artist(name, email, hashed_password, genres, description)
+            db.collection('artists').add(artist.to_dict())
         elif role == 'fan':
-            db.collection('fans').add(user_data)
+            fan = Fan(email, hashed_password)
+            db.collection('fans').add(fan.to_dict())
         return redirect('/login')
     return render_template('register.html')
 
@@ -113,11 +108,7 @@ def artist(name):
         artist_docs = artist_ref.stream()
         for doc in artist_docs:
             artist = doc.to_dict()
-            artist_name = artist['name']
-            artist_description = artist['description']
-            artist_genres = artist['genres']
-            artist_email = artist['email']
-            return render_template('artist.html', name=artist_name, description=artist_description, genres=artist_genres, current_user=current_user.id, email=artist_email)
+            return render_template('artist.html', name=artist['name'], description=artist['description'], genres=artist['genres'], current_user=current_user.id, email=artist['email'])
     return render_template('dash.html')
 
 def create_bucket_if_not_exists(bucket_name):
@@ -149,6 +140,7 @@ def upload_image():
         blob.patch()
     return redirect('/dash')
 
+@app.route('/upload_song', methods=['POST'])
 def upload_song():
     song_file = request.files['song']
     song_title = request.form.get('song_title')

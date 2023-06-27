@@ -88,6 +88,26 @@
         .upload-section input[type="submit"]:hover {
             background-color: #45a049;
         }
+
+        .button-section {
+            text-align: center;
+        }
+
+        .styled-button {
+            display: inline-block;
+            width: 200px;
+            margin: 0 10px;
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            text-align: center;
+            border-radius: 5px;
+        }
+
+        .styled-button:hover {
+            background-color: #0056b3;
+        }
     </style>
 </head>
 <body>
@@ -117,6 +137,10 @@
                 <input type="hidden" name="email" value="{{ email }}">
                 <input type="submit" value="Upload Song">
             </form>
+            <div class="button-section">
+                <a href="/artist/{{ name }}/view_songs" class="styled-button">View Songs</a>
+                <a href="/artist/{{ name }}/view_images" class="styled-button">View Images</a>
+            </div>
         </div>
         {% endif %}
         <script>
