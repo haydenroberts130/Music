@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>View Images</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f2f2f2;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .image-container {
+            background-color: #fff;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            color: #333;
+            margin-top: 0;
+            text-align: center;
+        }
+
+        .image-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        .image-card img {
+            width: 200px;
+            height: 200px;
+            object-fit: cover;
+            border-radius: 5px;
+        }
+
+        .image-card h2 {
+            margin: 10px 0;
+        }
+
+        .image-card p {
+            margin: 5px 0;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="image-container">
+        <h1>View Images - {{ name }}</h1>
+        {% if images %}
+            {% for image in images %}
+                <div class="image-card">
+                    <img src="{{ image.url }}" alt="{{ image.name }}">
+                    <h2>{{ image.metadata.title }}</h2>
+                    <p>{{ image.metadata.description }}</p>
+                </div>
+            {% endfor %}
+        {% else %}
+            <p>No images uploaded.</p>
+        {% endif %}
+        <a href="/artist/{{ name }}/view_songs" class="styled-button">View Songs</a>
+    </div>
+</body>
+</html>

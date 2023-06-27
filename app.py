@@ -6,6 +6,7 @@ import hashlib
 from google.cloud import storage
 import re
 from data import *
+from datetime import datetime, timedelta
 
 class User(UserMixin):
     def __init__(self, user_id):
@@ -112,10 +113,10 @@ def artist(name):
     return render_template('dash.html')
 
 def create_bucket_if_not_exists(bucket_name):
-    storage_client = storage.Client()
+    storage_client = storage.Client.from_service_account_json('training-project-388915-firebase-adminsdk-7tfwk-7384b5f0ef.json')
     bucket = storage_client.bucket(bucket_name)
     if not bucket.exists():
-        storage_client.create_bucket(bucket, location="us")
+        bucket.create(location="us")
 
 @app.route('/upload_image', methods=['POST'])
 def upload_image():
@@ -125,7 +126,7 @@ def upload_image():
     email = request.form.get('email')
     bucket_name = re.sub(r'[^a-z0-9-_]', '', email.lower()) + '-images'
     create_bucket_if_not_exists(bucket_name)
-    storage_client = storage.Client()
+    storage_client = storage.Client.from_service_account_json('training-project-388915-firebase-adminsdk-7tfwk-7384b5f0ef.json')
     bucket = storage_client.bucket(bucket_name)
     blob_name = image_file.filename
     blob = bucket.blob(blob_name)
@@ -149,7 +150,7 @@ def upload_song():
     email = request.form.get('email')
     bucket_name = re.sub(r'[^a-z0-9-_]', '', email.lower()) + '-songs'
     create_bucket_if_not_exists(bucket_name)
-    storage_client = storage.Client()
+    storage_client = storage.Client.from_service_account_json('training-project-388915-firebase-adminsdk-7tfwk-7384b5f0ef.json')
     bucket = storage_client.bucket(bucket_name)
     blob_name = song_file.filename
     blob = bucket.blob(blob_name)
@@ -165,6 +166,51 @@ def upload_song():
         blob.metadata = metadata
         blob.patch()
     return redirect('/dash')
+
+@app.route('/artist/<name>/view_songs')
+@login_required
+def view_songs(name):
+    email = current_user.get_id()
+    bucket_name = re.sub(r'[^a-z0-9-_]', '', email.lower()) + '-songs'
+    create_bucket_if_not_exists(bucket_name)
+    storage_client = storage.Client.from_service_account_json('training-project-388915-firebase-adminsdk-7tfwk-7384b5f0ef.json')
+    bucket = storage_client.bucket(bucket_name)
+    blobs = bucket.list_blobs()
+    songs = []
+    for blob in blobs:
+        song = {}
+        song['name'] = blob.name
+        song['url'] = blob.generate_signed_url(
+            version='v4',
+            expiration=datetime.utcnow() + timedelta(minutes=5),
+            method='GET'
+        )
+        song['metadata'] = blob.metadata
+        songs.append(song)
+    return render_template('view_songs.html', name=name, songs=songs)
+
+
+@app.route('/artist/<name>/view_images')
+@login_required
+def view_images(name):
+    email = current_user.get_id()
+    bucket_name = re.sub(r'[^a-z0-9-_]', '', email.lower()) + '-images'
+    create_bucket_if_not_exists(bucket_name)
+    storage_client = storage.Client.from_service_account_json('training-project-388915-firebase-adminsdk-7tfwk-7384b5f0ef.json')
+    bucket = storage_client.bucket(bucket_name)
+    blobs = bucket.list_blobs()
+    images = []
+    for blob in blobs:
+        image = {}
+        image['name'] = blob.name
+        image['url'] = blob.generate_signed_url(
+            version='v4',
+            expiration=datetime.utcnow() + timedelta(minutes=5),
+            method='GET'
+        )
+        image['metadata'] = blob.metadata
+        images.append(image)
+    return render_template('view_images.html', name=name, images=images)
 
 if __name__ == "__main__":
     app.run(port=5001, debug=True)

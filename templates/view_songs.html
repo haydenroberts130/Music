@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>View Songs</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f2f2f2;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .song-container {
+            background-color: #fff;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            color: #333;
+            margin-top: 0;
+            text-align: center;
+        }
+
+        .song-card {
+            margin-bottom: 20px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        .song-card h2 {
+            margin: 10px 0;
+        }
+
+        .song-card p {
+            margin: 5px 0;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="song-container">
+        <h1>{{ name|capitalize }}'s Songs</h1>
+        {% if songs %}
+            {% for song in songs %}
+                <div class="song-card">
+                    <h2>{{ song.metadata.song_title }}</h2>
+                    <p>{{ song.metadata.album_name }}</p>
+                    <audio controls>
+                        <source src="{{ song.url }}" type="audio/mpeg">
+                        Your browser does not support the audio element.
+                    </audio>
+                    <p>{{ song.metadata.song_description }}</p>
+                </div>
+            {% endfor %}
+        {% else %}
+            <p>No songs uploaded.</p>
+        {% endif %}
+        <a href="/artist/{{ name }}/view_images" class="styled-button">View Images</a>
+    </div>
+</body>
+</html>

@@ -103,6 +103,7 @@
             text-decoration: none;
             text-align: center;
             border-radius: 5px;
+            margin-top: 20px;
         }
 
         .styled-button:hover {
@@ -137,12 +138,12 @@
                 <input type="hidden" name="email" value="{{ email }}">
                 <input type="submit" value="Upload Song">
             </form>
-            <div class="button-section">
-                <a href="/artist/{{ name }}/view_songs" class="styled-button">View Songs</a>
-                <a href="/artist/{{ name }}/view_images" class="styled-button">View Images</a>
-            </div>
         </div>
         {% endif %}
+        <div class="button-section">
+            <a href="/artist/{{ name }}/view_songs" class="styled-button">View Songs</a>
+            <a href="/artist/{{ name }}/view_images" class="styled-button">View Images</a>
+        </div>
         <script>
             function validateFileSize(form) {
                 var fileInput = form.querySelector('input[type="file"]');
