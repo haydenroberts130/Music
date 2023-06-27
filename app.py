@@ -3,6 +3,8 @@ import firebase_admin
 from flask_login import login_user, login_required, logout_user, LoginManager, UserMixin, current_user
 from firebase_admin import credentials, firestore
 import hashlib
+from google.cloud import storage
+import re
 
 class User(UserMixin):
     def __init__(self, user_id):
@@ -115,8 +117,62 @@ def artist(name):
             artist_description = artist['description']
             artist_genres = artist['genres']
             artist_email = artist['email']
-            return render_template('artist.html', name=artist_name, description=artist_description, genres=artist_genres, current_user=current_user, email=artist_email)
+            return render_template('artist.html', name=artist_name, description=artist_description, genres=artist_genres, current_user=current_user.id, email=artist_email)
     return render_template('dash.html')
+
+def create_bucket_if_not_exists(bucket_name):
+    storage_client = storage.Client()
+    bucket = storage_client.bucket(bucket_name)
+    if not bucket.exists():
+        storage_client.create_bucket(bucket, location="us")
+
+@app.route('/upload_image', methods=['POST'])
+def upload_image():
+    image_file = request.files['image']
+    title = request.form.get('title')
+    description = request.form.get('description')
+    email = request.form.get('email')
+    bucket_name = re.sub(r'[^a-z0-9-_]', '', email.lower()) + '-images'
+    create_bucket_if_not_exists(bucket_name)
+    storage_client = storage.Client()
+    bucket = storage_client.bucket(bucket_name)
+    blob_name = image_file.filename
+    blob = bucket.blob(blob_name)
+    blob.upload_from_file(image_file)
+    if title or description:
+        metadata = {}
+        if title:
+            metadata['title'] = title
+        if description:
+            metadata['description'] = description
+        blob.metadata = metadata
+        blob.patch()
+    return redirect('/dash')
+
+def upload_song():
+    song_file = request.files['song']
+    song_title = request.form.get('song_title')
+    album_name = request.form.get('album_name')
+    song_description = request.form.get('song_description')
+    email = request.form.get('email')
+    bucket_name = re.sub(r'[^a-z0-9-_]', '', email.lower()) + '-songs'
+    create_bucket_if_not_exists(bucket_name)
+    storage_client = storage.Client()
+    bucket = storage_client.bucket(bucket_name)
+    blob_name = song_file.filename
+    blob = bucket.blob(blob_name)
+    blob.upload_from_file(song_file)
+    if song_title or album_name or song_description:
+        metadata = {}
+        if song_title:
+            metadata['song_title'] = song_title
+        if album_name:
+            metadata['album_name'] = album_name
+        if song_description:
+            metadata['song_description'] = song_description
+        blob.metadata = metadata
+        blob.patch()
+    return redirect('/dash')
 
 if __name__ == "__main__":
     app.run(port=5001, debug=True)
