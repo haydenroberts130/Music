@@ -17,6 +17,9 @@
             padding: 20px;
             background-color: white;
             box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            align-items: left;
         }
 
         h1 {
@@ -109,6 +112,45 @@
         .styled-button:hover {
             background-color: #0056b3;
         }
+
+        .follow-artist-section {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .follow-artist-button {
+            padding: 10px 20px;
+            background-color: #f2f2f2;
+            color: #000;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            text-decoration: none;
+        }
+
+        .follow-artist-button:hover {
+            background-color: #45a049;
+            color: white;
+        }
+
+        .unfollow-artist-button {
+            padding: 10px 20px;
+            background-color: #f2f2f2;
+            color: #000;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            text-decoration: none;
+        }
+
+        .unfollow-artist-button:hover {
+            background-color: maroon;
+            color: white;
+        }
     </style>
 </head>
 <body>
@@ -144,6 +186,24 @@
                 <input type="submit" value="Post Message">
             </form>
         </div>
+        {% else %}
+            {% if current_user_following %}
+            <div class="follow-artist-section">
+                <form action="/unfollow_artist" method="post">
+                    <input type="hidden" name="email" value="{{ email }}">
+                    <input type="hidden" name="current_user" value="{{ current_user }}">
+                    <input class="unfollow-artist-button" type="submit" value="Unfollow Artist">
+                </form>
+            </div>
+            {% else %}
+            <div class="follow-artist-section">
+                <form action="/follow_artist" method="post">
+                    <input type="hidden" name="email" value="{{ email }}">
+                    <input type="hidden" name="current_user" value="{{ current_user }}">
+                    <input class="follow-artist-button" type="submit" value="Follow Artist">
+                </form>
+            </div>
+            {% endif %}
         {% endif %}
         <div class="button-section">
             <form action="/artist/{{ name }}/view_songs" method="post" style="display: inline;">

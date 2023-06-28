@@ -110,7 +110,15 @@ def artist(name):
         artist_docs = artist_ref.stream()
         for doc in artist_docs:
             artist = doc.to_dict()
-            return render_template('artist.html', name=artist['name'], description=artist['description'], genres=artist['genres'], current_user=current_user.id, email=artist['email'])
+            current_user_id = current_user.id
+            fan_ref = db.collection('fans').where('email', '==', current_user_id).limit(1).get()
+            current_user_following = False
+            if len(fan_ref) > 0:
+                fan_doc = fan_ref[0].to_dict()
+                if 'following' in fan_doc:
+                     if artist['email'] in fan_doc['following']:
+                        current_user_following = True
+            return render_template('artist.html', name=artist['name'], description=artist['description'], genres=artist['genres'], current_user=current_user.id, email=artist['email'], current_user_following = current_user_following)
     return render_template('dash.html')
 
 def create_bucket_if_not_exists(bucket_name):
@@ -247,6 +255,44 @@ def view_messages(name):
                 messages.extend(artist_messages)
     return render_template('view_messages.html', messages=messages, name=name)
 
+@app.route('/follow_artist', methods=['POST'])
+def follow_artist():
+    email = request.form.get('email')
+    current_user_id = request.form.get('current_user')
+    artist_ref = db.collection('artists').where('email', '==', email).limit(1).get()
+    if len(artist_ref) > 0:
+        artist_doc = artist_ref[0].reference
+        artist_doc.update({
+            'followers': firestore.ArrayUnion([current_user_id])
+        })
+
+    fan_ref = db.collection('fans').where('email', '==', current_user_id).limit(1).get()
+    if len(fan_ref) > 0:
+        fan_doc = fan_ref[0].reference
+        fan_doc.update({
+            'following': firestore.ArrayUnion([email])
+        })
+    return redirect('/dash')
+
+@app.route('/unfollow_artist', methods=['POST'])
+def unfollow_artist():
+    email = request.form.get('email')
+    current_user_id = request.form.get('current_user')
+    artist_ref = db.collection('artists').where('email', '==', email).limit(1).get()
+    if len(artist_ref) > 0:
+        artist_doc = artist_ref[0].reference
+        artist_doc.update({
+            'followers': firestore.ArrayRemove([current_user_id])
+        })
+
+    fan_ref = db.collection('fans').where('email', '==', current_user_id).limit(1).get()
+    if len(fan_ref) > 0:
+        fan_doc_ref = fan_ref[0].reference
+        fan_doc_ref.update({
+            'following': firestore.ArrayRemove([email])
+        })
+    return redirect('/dash')
+    
 if __name__ == "__main__":
     app.run(port=5001, debug=True)
 
