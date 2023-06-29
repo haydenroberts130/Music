@@ -49,11 +49,38 @@
             margin: 5px 0;
             color: #666;
         }
+
+        .header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .top-right {
+            position: absolute;
+            top: 90px;
+            right: 350px;
+            background-color: #f2f2f2;
+            padding: 10px;
+            border-radius: 5px;
+            text-decoration: none;
+        }
+
+        .home-link {
+            margin-left: auto;
+        }
+
+        .home-link:hover {
+            text-decoration: underline;
+        }
     </style>
 </head>
 <body>
     <div class="image-container">
-        <h1>View Images - {{ name }}</h1>
+        <div class="header">
+            <a class="top-right home-link" href="/dash">Back to Dashboard</a>
+            <h1>{{ name|capitalize }}'s Images</h1>
+        </div>
         {% if images %}
             {% for image in images %}
                 <div class="image-card">
@@ -65,7 +92,6 @@
         {% else %}
             <p>No images uploaded.</p>
         {% endif %}
-        <a href="/artist/{{ name }}/view_songs" class="styled-button">View Songs</a>
     </div>
 </body>
 </html>

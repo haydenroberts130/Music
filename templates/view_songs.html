@@ -39,11 +39,31 @@
             margin: 5px 0;
             color: #666;
         }
+        .top-right {
+            position: absolute;
+            top: 90px;
+            right: 350px;
+            background-color: #f2f2f2;
+            padding: 10px;
+            border-radius: 5px;
+            text-decoration: none;
+        }
+
+        .home-link {
+            margin-left: auto;
+        }
+
+        .home-link:hover {
+            text-decoration: underline;
+        }
     </style>
 </head>
 <body>
     <div class="song-container">
-        <h1>{{ name|capitalize }}'s Songs</h1>
+        <div class="header">
+            <a class="top-right home-link" href="/dash">Back to Dashboard</a>
+            <h1>{{ name|capitalize }}'s Songs</h1>
+        </div>
         {% if songs %}
             {% for song in songs %}
                 <div class="song-card">
@@ -59,7 +79,6 @@
         {% else %}
             <p>No songs uploaded.</p>
         {% endif %}
-        <a href="/artist/{{ name }}/view_images" class="styled-button">View Images</a>
     </div>
 </body>
 </html>

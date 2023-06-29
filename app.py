@@ -8,6 +8,7 @@ import re
 from data import *
 from datetime import datetime, timedelta
 import datetime
+from google.oauth2.service_account import Credentials
 
 class User(UserMixin):
     def __init__(self, user_id):
@@ -133,7 +134,7 @@ def upload_image():
     title = request.form.get('title')
     description = request.form.get('description')
     email = request.form.get('email')
-    bucket_name = re.sub(r'[^a-z0-9-_]', '', email.lower()) + '-images'
+    bucket_name = "haydens-music-" + re.sub(r'[^a-z0-9-_]', '', email.lower()) + '-images'
     create_bucket_if_not_exists(bucket_name)
     storage_client = storage.Client()
     bucket = storage_client.bucket(bucket_name)
@@ -157,7 +158,7 @@ def upload_song():
     album_name = request.form.get('album_name')
     song_description = request.form.get('song_description')
     email = request.form.get('email')
-    bucket_name = re.sub(r'[^a-z0-9-_]', '', email.lower()) + '-songs'
+    bucket_name = "haydens-music-" + re.sub(r'[^a-z0-9-_]', '', email.lower()) + '-images'
     create_bucket_if_not_exists(bucket_name)
     storage_client = storage.Client()
     bucket = storage_client.bucket(bucket_name)
@@ -180,21 +181,22 @@ def upload_song():
 @login_required
 def view_songs(name):
     email = request.form.get('email')
-    bucket_name = re.sub(r'[^a-z0-9-_]', '', email.lower()) + '-songs'
+    bucket_name = "haydens-music-" + re.sub(r'[^a-z0-9-_]', '', email.lower()) + '-images'
     create_bucket_if_not_exists(bucket_name)
-    storage_client = storage.Client()
+    credentials = Credentials.from_service_account_file('training-project-388915-firebase-adminsdk-7tfwk-7384b5f0ef.json')
+    storage_client = storage.Client(credentials=credentials)
     bucket = storage_client.bucket(bucket_name)
     blobs = bucket.list_blobs()
     songs = []
     for blob in blobs:
         song = {}
         song['name'] = blob.name
+        song['metadata'] = blob.metadata
         song['url'] = blob.generate_signed_url(
             version='v4',
-            expiration=datetime.utcnow() + timedelta(minutes=5),
+            expiration=datetime.datetime.utcnow() + timedelta(minutes=5),
             method='GET'
         )
-        song['metadata'] = blob.metadata
         songs.append(song)
     return render_template('view_songs.html', name=name, songs=songs)
 
@@ -203,21 +205,22 @@ def view_songs(name):
 @login_required
 def view_images(name):
     email = request.form.get('email')
-    bucket_name = re.sub(r'[^a-z0-9-_]', '', email.lower()) + '-images'
+    bucket_name = "haydens-music-" + re.sub(r'[^a-z0-9-_]', '', email.lower()) + '-images'
     create_bucket_if_not_exists(bucket_name)
-    storage_client = storage.Client()
+    credentials = Credentials.from_service_account_file('training-project-388915-firebase-adminsdk-7tfwk-7384b5f0ef.json')
+    storage_client = storage.Client(credentials=credentials)
     bucket = storage_client.bucket(bucket_name)
     blobs = bucket.list_blobs()
     images = []
     for blob in blobs:
         image = {}
         image['name'] = blob.name
+        image['metadata'] = blob.metadata
         image['url'] = blob.generate_signed_url(
             version='v4',
-            expiration=datetime.utcnow() + timedelta(minutes=5),
+            expiration=datetime.datetime.utcnow() + timedelta(minutes=5),
             method='GET'
         )
-        image['metadata'] = blob.metadata
         images.append(image)
     return render_template('view_images.html', name=name, images=images)
 
