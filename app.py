@@ -122,8 +122,8 @@ def artist(name):
     return render_template('dash.html')
 
 def create_bucket_if_not_exists(bucket_name):
-    storage_client = storage.Client.from_service_account_json('training-project-388915-firebase-adminsdk-7tfwk-7384b5f0ef.json')
-    bucket = storage_client.bucket(bucket_name)
+    storage_client = storage.Client()
+    bucket = storage.Bucket(storage_client, bucket_name)
     if not bucket.exists():
         bucket.create(location="us")
 
@@ -135,7 +135,7 @@ def upload_image():
     email = request.form.get('email')
     bucket_name = re.sub(r'[^a-z0-9-_]', '', email.lower()) + '-images'
     create_bucket_if_not_exists(bucket_name)
-    storage_client = storage.Client.from_service_account_json('training-project-388915-firebase-adminsdk-7tfwk-7384b5f0ef.json')
+    storage_client = storage.Client()
     bucket = storage_client.bucket(bucket_name)
     blob_name = image_file.filename
     blob = bucket.blob(blob_name)
@@ -159,7 +159,7 @@ def upload_song():
     email = request.form.get('email')
     bucket_name = re.sub(r'[^a-z0-9-_]', '', email.lower()) + '-songs'
     create_bucket_if_not_exists(bucket_name)
-    storage_client = storage.Client.from_service_account_json('training-project-388915-firebase-adminsdk-7tfwk-7384b5f0ef.json')
+    storage_client = storage.Client()
     bucket = storage_client.bucket(bucket_name)
     blob_name = song_file.filename
     blob = bucket.blob(blob_name)
@@ -182,7 +182,7 @@ def view_songs(name):
     email = request.form.get('email')
     bucket_name = re.sub(r'[^a-z0-9-_]', '', email.lower()) + '-songs'
     create_bucket_if_not_exists(bucket_name)
-    storage_client = storage.Client.from_service_account_json('training-project-388915-firebase-adminsdk-7tfwk-7384b5f0ef.json')
+    storage_client = storage.Client()
     bucket = storage_client.bucket(bucket_name)
     blobs = bucket.list_blobs()
     songs = []
@@ -205,7 +205,7 @@ def view_images(name):
     email = request.form.get('email')
     bucket_name = re.sub(r'[^a-z0-9-_]', '', email.lower()) + '-images'
     create_bucket_if_not_exists(bucket_name)
-    storage_client = storage.Client.from_service_account_json('training-project-388915-firebase-adminsdk-7tfwk-7384b5f0ef.json')
+    storage_client = storage.Client()
     bucket = storage_client.bucket(bucket_name)
     blobs = bucket.list_blobs()
     images = []
@@ -292,7 +292,7 @@ def unfollow_artist():
             'following': firestore.ArrayRemove([email])
         })
     return redirect('/dash')
-    
+
 if __name__ == "__main__":
     app.run(port=5001, debug=True)
 
