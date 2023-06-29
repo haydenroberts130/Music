@@ -9,6 +9,8 @@ from data import *
 from datetime import datetime, timedelta
 import datetime
 from google.oauth2.service_account import Credentials
+import json
+import ast
 
 class User(UserMixin):
     def __init__(self, user_id):
@@ -158,7 +160,7 @@ def upload_song():
     album_name = request.form.get('album_name')
     song_description = request.form.get('song_description')
     email = request.form.get('email')
-    bucket_name = "haydens-music-" + re.sub(r'[^a-z0-9-_]', '', email.lower()) + '-images'
+    bucket_name = "haydens-music-" + re.sub(r'[^a-z0-9-_]', '', email.lower()) + '-songs'
     create_bucket_if_not_exists(bucket_name)
     storage_client = storage.Client()
     bucket = storage_client.bucket(bucket_name)
@@ -181,7 +183,7 @@ def upload_song():
 @login_required
 def view_songs(name):
     email = request.form.get('email')
-    bucket_name = "haydens-music-" + re.sub(r'[^a-z0-9-_]', '', email.lower()) + '-images'
+    bucket_name = "haydens-music-" + re.sub(r'[^a-z0-9-_]', '', email.lower()) + '-songs'
     create_bucket_if_not_exists(bucket_name)
     credentials = Credentials.from_service_account_file('training-project-388915-firebase-adminsdk-7tfwk-7384b5f0ef.json')
     storage_client = storage.Client(credentials=credentials)
@@ -198,7 +200,7 @@ def view_songs(name):
             method='GET'
         )
         songs.append(song)
-    return render_template('view_songs.html', name=name, songs=songs)
+    return render_template('view_songs.html', name=name, songs=songs, email=email)
 
 
 @app.route('/artist/<name>/view_images', methods=['POST'])
@@ -294,6 +296,35 @@ def unfollow_artist():
         fan_doc_ref.update({
             'following': firestore.ArrayRemove([email])
         })
+    return redirect('/dash')
+
+@app.route('/add_rating', methods=['POST'])
+def add_rating():
+    rating = request.form.get('rating')
+    song_title = request.form.get('song_title')
+    review = request.form.get('review')
+    email = request.form.get('email')
+    bucket_name = "haydens-music-" + re.sub(r'[^a-z0-9-_]', '', email.lower()) + '-songs'
+    credentials = Credentials.from_service_account_file('training-project-388915-firebase-adminsdk-7tfwk-7384b5f0ef.json')
+    storage_client = storage.Client(credentials=credentials)
+    bucket = storage_client.bucket(bucket_name)
+    blobs = bucket.list_blobs()
+    for blob in blobs:
+        if blob.metadata["song_title"] == song_title:
+            metadata = blob.metadata or {}
+            if "reviews" in metadata:
+                metadata_reviews = ast.literal_eval(metadata.get("reviews"))
+                metadata_reviews[current_user.id] = [rating, review]
+                metadata['reviews'] = metadata_reviews
+            else:
+                metadata['reviews'] = {current_user.id:[rating, review]}
+            summed = 0
+            reviews = metadata["reviews"]
+            for review in reviews:
+                summed += float(reviews[review][0])
+            metadata["average_rating"] = summed / len(reviews) 
+            blob.metadata = metadata
+            blob.patch()
     return redirect('/dash')
 
 if __name__ == "__main__":

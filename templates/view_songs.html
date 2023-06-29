@@ -56,6 +56,82 @@
         .home-link:hover {
             text-decoration: underline;
         }
+        .rating-container {
+            margin-top: 10px;
+        }
+
+        .rating-container input[type="radio"] {
+            display: none;
+        }
+
+        .rating-container label {
+            display: inline-block;
+            margin-right: 5px;
+            cursor: pointer;
+        }
+
+        .review-container textarea {
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .review-container span {
+            font-size: 12px;
+            color: #999;
+        }
+
+        .review-container span.error {
+            color: red;
+        }
+
+        .submit-container {
+            margin-top: 10px;
+        }
+
+        .submit-container input[type="submit"] {
+            padding: 5px 10px;
+            background-color: #4285f4;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .submit-container input[type="submit"]:hover {
+            background-color: #3367d6;
+        }
+        .rating-label {
+            margin-left: 5px;
+            font-weight: bold;
+        }
+
+        .rating-label .rating-value.green {
+            color: white;
+            background-color: green;
+            border-radius: 10px;
+            padding: 8px 12px;
+        }
+
+        .rating-label .rating-value.yellow {
+            color: black;
+            background-color: yellow;
+            border-radius: 10px;
+            padding: 8px 12px;
+        }
+
+        .rating-label .rating-value.red {
+            color: white;
+            background-color: red;
+            border-radius: 10px;
+            padding: 8px 12px;
+        }
+
+        .rating-label.blue {
+            color: white;
+            background-color: blue;
+            border-radius: 10px;
+            padding: 8px 12px;
+        }
     </style>
 </head>
 <body>
@@ -67,7 +143,27 @@
         {% if songs %}
             {% for song in songs %}
                 <div class="song-card">
-                    <h2>{{ song.metadata.song_title }}</h2>
+                    <h2>
+                        {{ song.metadata.song_title }}
+                        {% if 'average_rating' in song.metadata %}
+                            {% set rating = song.metadata.average_rating|float %}
+                            <span class="rating-label">
+                                <span class="rating-value
+                                    {% if rating >= 3.33 %}
+                                        green
+                                    {% elif 1.66 <= rating < 3.33 %}
+                                        yellow
+                                    {% else %}
+                                        red
+                                    {% endif %}
+                                ">
+                                    {{ rating }} / 5.0
+                                </span>
+                            </span>
+                        {% else %}
+                            <span class="rating-label blue">Not rated</span>
+                        {% endif %}
+                    </h2>
                     <p>{{ song.metadata.album_name }}</p>
                     <audio controls>
                         <source src="{{ song.url }}" type="audio/mpeg">
@@ -75,6 +171,29 @@
                     </audio>
                     <p>{{ song.metadata.song_description }}</p>
                 </div>
+                <form method="post" action="/add_rating">
+                    <select name="rating">
+                        <option>0.0</option>
+                        <option>0.5</option>
+                        <option>1.0</option>
+                        <option>1.5</option>
+                        <option>2.0</option>
+                        <option>2.5</option>
+                        <option>3.0</option>
+                        <option>3.5</option>
+                        <option>4.0</option>
+                        <option>4.5</option>
+                        <option>5.0</option>
+                    </select>
+                    <input class="input" name="song_title" type="hidden" value="{{song.metadata.song_title }}">
+                    <input type="hidden" name="email" value="{{ email }}">
+                    <div class="review-container">
+                        <textarea name="review" id="review{{ song.metadata.song_id }}" rows="4" maxlength="200" placeholder="Leave a review (max 200 characters)"></textarea>
+                        <span id="review-error{{ song.metadata.song_id }}" class="error"></span>
+                    </div>
+                    <button type="submit">Rate This Song</button>
+                </form>
+            </div>
             {% endfor %}
         {% else %}
             <p>No songs uploaded.</p>
