@@ -327,6 +327,22 @@ def add_rating():
             blob.patch()
     return redirect('/dash')
 
+@app.route('/reviews/<song_id>', methods=['POST'])
+def view_reviews(song_id):
+    email = request.form.get('email')
+    song_title = request.form.get('song_title')
+    bucket_name = "haydens-music-" + re.sub(r'[^a-z0-9-_]', '', email.lower()) + '-songs'
+    credentials = Credentials.from_service_account_file('training-project-388915-firebase-adminsdk-7tfwk-7384b5f0ef.json')
+    storage_client = storage.Client(credentials=credentials)
+    bucket = storage_client.bucket(bucket_name)
+    blobs = bucket.list_blobs()
+    for blob in blobs:
+        if blob.metadata["song_title"] == song_title:
+            metadata = blob.metadata or {}
+            if "reviews" in metadata:
+                reviews = ast.literal_eval(metadata.get("reviews")).values()
+    return render_template('reviews.html', email=email, song_title=song_title, reviews=reviews)
+
 if __name__ == "__main__":
     app.run(port=5001, debug=True)
 

@@ -39,6 +39,7 @@
             margin: 5px 0;
             color: #666;
         }
+
         .top-right {
             position: absolute;
             top: 90px;
@@ -56,6 +57,7 @@
         .home-link:hover {
             text-decoration: underline;
         }
+
         .rating-container {
             margin-top: 10px;
         }
@@ -100,6 +102,7 @@
         .submit-container input[type="submit"]:hover {
             background-color: #3367d6;
         }
+
         .rating-label {
             margin-left: 5px;
             font-weight: bold;
@@ -132,6 +135,29 @@
             border-radius: 10px;
             padding: 8px 12px;
         }
+
+        .view-reviews-button {
+            display: inline-block;
+            padding: 10px;
+            background-color: #f2f2f2;
+            border-radius: 5px;
+            text-decoration: none;
+            color: #333;
+            margin-left: 10px;
+        }
+
+        .view-reviews-button:hover {
+            text-decoration: underline;
+        }
+
+        .heading-container {
+            display: flex;
+            align-items: center;
+        }
+
+        .heading-container .view-reviews-button {
+            margin-left: 10px;
+        }
     </style>
 </head>
 <body>
@@ -143,33 +169,40 @@
         {% if songs %}
             {% for song in songs %}
                 <div class="song-card">
-                    <h2>
-                        {{ song.metadata.song_title }}
-                        {% if 'average_rating' in song.metadata %}
-                            {% set rating = song.metadata.average_rating|float %}
-                            <span class="rating-label">
-                                <span class="rating-value
-                                    {% if rating >= 3.33 %}
-                                        green
-                                    {% elif 1.66 <= rating < 3.33 %}
-                                        yellow
-                                    {% else %}
-                                        red
-                                    {% endif %}
-                                ">
-                                    {{ rating }} / 5.0
+                    <div class="heading-container">
+                        <h2>
+                            {{ song.metadata.song_title }}
+                            {% if 'average_rating' in song.metadata %}
+                                {% set rating = song.metadata.average_rating|float %}
+                                <span class="rating-label">
+                                    <span class="rating-value
+                                        {% if rating >= 3.33 %}
+                                            green
+                                        {% elif 1.66 <= rating < 3.33 %}
+                                            yellow
+                                        {% else %}
+                                            red
+                                        {% endif %}
+                                    ">
+                                        {{ rating }} / 5.0
+                                    </span>
                                 </span>
-                            </span>
-                        {% else %}
-                            <span class="rating-label blue">Not rated</span>
-                        {% endif %}
-                    </h2>
-                    <p>{{ song.metadata.album_name }}</p>
+                            {% else %}
+                                <span class="rating-label blue">Not rated</span>
+                            {% endif %}
+                        </h2>
+                        <form method="post" action="/reviews/{{ song.metadata.song_title }}">
+                            <input type="hidden" name="email" value="{{ email }}">
+                            <input type="hidden" name="song_title" value="{{ song.metadata.song_title }}">
+                            <button type="submit" class="view-reviews-button">View Reviews</button>
+                        </form>
+                    </div>
+                    <p>Album: {{ song.metadata.album_name }}</p>
                     <audio controls>
                         <source src="{{ song.url }}" type="audio/mpeg">
                         Your browser does not support the audio element.
                     </audio>
-                    <p>{{ song.metadata.song_description }}</p>
+                    <p>Description: {{ song.metadata.song_description }}</p>
                 </div>
                 <form method="post" action="/add_rating">
                     <select name="rating">
@@ -188,12 +221,11 @@
                     <input class="input" name="song_title" type="hidden" value="{{song.metadata.song_title }}">
                     <input type="hidden" name="email" value="{{ email }}">
                     <div class="review-container">
-                        <textarea name="review" id="review{{ song.metadata.song_id }}" rows="4" maxlength="200" placeholder="Leave a review (max 200 characters)"></textarea>
-                        <span id="review-error{{ song.metadata.song_id }}" class="error"></span>
+                        <textarea name="review" id="review{{song.metadata.song_title }}" rows="4" maxlength="200" placeholder="Leave a review (max 200 characters)"></textarea>
+                        <span id="review-error{{ song.metadata.song_title }}" class="error"></span>
                     </div>
                     <button type="submit">Rate This Song</button>
                 </form>
-            </div>
             {% endfor %}
         {% else %}
             <p>No songs uploaded.</p>
