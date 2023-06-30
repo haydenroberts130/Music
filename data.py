@@ -18,7 +18,7 @@ cred = credentials.Certificate('training-project-388915-firebase-adminsdk-7tfwk-
 firebase_admin.initialize_app(cred)
 db = firestore.client()
 
-class FireBaseTemplate():
+class BucketManager():
     def __init__(self):
         self._key = 'training-project-388915-firebase-adminsdk-7tfwk-7384b5f0ef.json'
         self._credentials = Credentials.from_service_account_file(self._key)
@@ -139,7 +139,7 @@ class User(UserMixin):
     def get_id(self):
         return self.id
 
-class UserManagement():
+class UserManager():
     def __init__(self):
         pass
 

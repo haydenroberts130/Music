@@ -23,7 +23,7 @@ def login():
         email = request.form['email']
         password = request.form['password']
         role = request.form['role']
-        manager = UserManagement()
+        manager = UserManager()
         if manager.validate_credentials(email, password, role):
             user = User(email)
             login_user(user)
@@ -38,7 +38,7 @@ def register():
         email = request.form['email']
         password = request.form['password']
         role = request.form['role']
-        manager = UserManagement()
+        manager = UserManager()
         hashed_password = manager.hash_password(password)
         if role == 'artist':
             genres = request.form.getlist('genres[]')
@@ -85,9 +85,9 @@ def upload_image():
     image_file = request.files['image']
     title = request.form.get('title')
     description = request.form.get('description')
-    template = FireBaseTemplate()
-    bucket = template.get_image_bucket(request.form.get('email'))
-    template.upload_image(image_file, title, description, bucket)
+    manager = BucketManager()
+    bucket = manager.get_image_bucket(request.form.get('email'))
+    manager.upload_image(image_file, title, description, bucket)
     return redirect('/dash')
 
 @app.route('/upload_song', methods=['POST'])
@@ -96,26 +96,26 @@ def upload_song():
     song_title = request.form.get('song_title')
     album_name = request.form.get('album_name')
     song_description = request.form.get('song_description')
-    template = FireBaseTemplate()
-    bucket = template.get_song_bucket(request.form.get('email'))
-    template.upload_song(song_file, song_title, album_name, song_description, bucket)
+    manager = BucketManager()
+    bucket = manager.get_song_bucket(request.form.get('email'))
+    manager.upload_song(song_file, song_title, album_name, song_description, bucket)
     return redirect('/dash')
 
 @app.route('/artist/<name>/view_songs', methods=['POST'])
 @login_required
 def view_songs(name):
-    template = FireBaseTemplate()
+    manager = BucketManager()
     email = request.form.get('email')
-    bucket = template.get_song_bucket(email)
-    songs = template.get_songs_from_bucket(bucket)
+    bucket = manager.get_song_bucket(email)
+    songs = manager.get_songs_from_bucket(bucket)
     return render_template('view_songs.html', name=name, songs=songs, email=email)
 
 @app.route('/artist/<name>/view_images', methods=['POST'])
 @login_required
 def view_images(name):
-    template = FireBaseTemplate()
-    bucket = template.get_image_bucket(request.form.get('email'))
-    images = template.get_images_from_bucket(bucket)
+    manager = BucketManager()
+    bucket = manager.get_image_bucket(request.form.get('email'))
+    images = manager.get_images_from_bucket(bucket)
     return render_template('view_images.html', name=name, images=images)
 
 @app.route('/post_message', methods=['POST'])
@@ -133,14 +133,14 @@ def view_messages(name):
 @app.route('/follow_artist', methods=['POST'])
 def follow_artist():
     email = request.form.get('email')
-    manager = UserManagement()
+    manager = UserManager()
     manager.follow_artist(email)
     return redirect('/dash')
 
 @app.route('/unfollow_artist', methods=['POST'])
 def unfollow_artist():
     email = request.form.get('email')
-    manager = UserManagement()
+    manager = UserManager()
     manager.unfollow_artist(email)
     return redirect('/dash')
 
@@ -149,18 +149,18 @@ def add_rating():
     rating = request.form.get('rating')
     song_title = request.form.get('song_title')
     review = request.form.get('review')
-    template = FireBaseTemplate()
-    bucket = template.get_song_bucket(request.form.get('email'))
-    template.add_rating_to_song(rating, song_title, review, bucket)
+    manager = BucketManager()
+    bucket = manager.get_song_bucket(request.form.get('email'))
+    manager.add_rating_to_song(rating, song_title, review, bucket)
     return redirect('/dash')
 
 @app.route('/reviews/<song_id>', methods=['POST'])
 def view_reviews(song_id):
     email = request.form.get('email')
     song_title = request.form.get('song_title')
-    template = FireBaseTemplate()
-    bucket = template.get_song_bucket(email)
-    reviews = template.get_reviews_from_song(bucket, song_title)
+    manager = BucketManager()
+    bucket = manager.get_song_bucket(email)
+    reviews = manager.get_reviews_from_song(bucket, song_title)
     return render_template('reviews.html', email=email, song_title=song_title, reviews=reviews)
 
 if __name__ == "__main__":
