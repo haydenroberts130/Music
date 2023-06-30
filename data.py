@@ -164,7 +164,37 @@ class UserManagement():
                 return True
         return False
     
+    def follow_artist(self, email):
+        current_user_id = request.form.get('current_user')
+        artist_ref = db.collection('artists').where('email', '==', email).limit(1).get()
+        if len(artist_ref) > 0:
+            artist_doc = artist_ref[0].reference
+            artist_doc.update({
+                'followers': firestore.ArrayUnion([current_user_id])
+            })
+
+        fan_ref = db.collection('fans').where('email', '==', current_user_id).limit(1).get()
+        if len(fan_ref) > 0:
+            fan_doc = fan_ref[0].reference
+            fan_doc.update({
+                'following': firestore.ArrayUnion([email])
+            })
     
+    def unfollow_artist(self, email):
+        current_user_id = request.form.get('current_user')
+        artist_ref = db.collection('artists').where('email', '==', email).limit(1).get()
+        if len(artist_ref) > 0:
+            artist_doc = artist_ref[0].reference
+            artist_doc.update({
+                'followers': firestore.ArrayRemove([current_user_id])
+            })
+
+        fan_ref = db.collection('fans').where('email', '==', current_user_id).limit(1).get()
+        if len(fan_ref) > 0:
+            fan_doc_ref = fan_ref[0].reference
+            fan_doc_ref.update({
+                'following': firestore.ArrayRemove([email])
+            })
 
 class Artist:
     def __init__(self, name, email, password, genres, description):
