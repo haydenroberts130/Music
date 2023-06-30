@@ -1,24 +1,4 @@
-from flask import Flask, request, redirect, render_template
-import firebase_admin
-from flask_login import login_user, login_required, logout_user, LoginManager, current_user
-from firebase_admin import credentials, firestore
-import hashlib
-from google.cloud import storage
-import re
 from data import *
-from datetime import datetime, timedelta
-import datetime
-from google.oauth2.service_account import Credentials
-import json
-import ast
-
-class User(UserMixin):
-    def __init__(self, user_id):
-        self.id = user_id
-        is_active = True
-    
-    def get_id(self):
-        return self.id
 
 config = {}
 config["SECRET_KEY"] = "123"
@@ -61,7 +41,6 @@ def validate_credentials(email, password, role):
         if stored_password == hash_password(password):
             return True
     return False
-
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
