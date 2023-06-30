@@ -124,33 +124,14 @@ def artist(name):
             return render_template('artist.html', name=artist['name'], description=artist['description'], genres=artist['genres'], current_user=current_user.id, email=artist['email'], current_user_following = current_user_following)
     return render_template('dash.html')
 
-def create_bucket_if_not_exists(bucket_name):
-    storage_client = storage.Client()
-    bucket = storage.Bucket(storage_client, bucket_name)
-    if not bucket.exists():
-        bucket.create(location="us")
-
 @app.route('/upload_image', methods=['POST'])
 def upload_image():
     image_file = request.files['image']
     title = request.form.get('title')
     description = request.form.get('description')
-    email = request.form.get('email')
-    bucket_name = "haydens-music-" + re.sub(r'[^a-z0-9-_]', '', email.lower()) + '-images'
-    create_bucket_if_not_exists(bucket_name)
-    storage_client = storage.Client()
-    bucket = storage_client.bucket(bucket_name)
-    blob_name = image_file.filename
-    blob = bucket.blob(blob_name)
-    blob.upload_from_file(image_file)
-    if title or description:
-        metadata = {}
-        if title:
-            metadata['title'] = title
-        if description:
-            metadata['description'] = description
-        blob.metadata = metadata
-        blob.patch()
+    template = FireBaseTemplate()
+    bucket = template.get_image_bucket(request.form.get('email'))
+    template.upload_image(image_file, title, description, bucket)
     return redirect('/dash')
 
 @app.route('/upload_song', methods=['POST'])
@@ -159,71 +140,26 @@ def upload_song():
     song_title = request.form.get('song_title')
     album_name = request.form.get('album_name')
     song_description = request.form.get('song_description')
-    email = request.form.get('email')
-    bucket_name = "haydens-music-" + re.sub(r'[^a-z0-9-_]', '', email.lower()) + '-songs'
-    create_bucket_if_not_exists(bucket_name)
-    storage_client = storage.Client()
-    bucket = storage_client.bucket(bucket_name)
-    blob_name = song_file.filename
-    blob = bucket.blob(blob_name)
-    blob.upload_from_file(song_file)
-    if song_title or album_name or song_description:
-        metadata = {}
-        if song_title:
-            metadata['song_title'] = song_title
-        if album_name:
-            metadata['album_name'] = album_name
-        if song_description:
-            metadata['song_description'] = song_description
-        blob.metadata = metadata
-        blob.patch()
+    template = FireBaseTemplate()
+    bucket = template.get_song_bucket(request.form.get('email'))
+    template.upload_song(song_file, song_title, album_name, song_description, bucket)
     return redirect('/dash')
 
 @app.route('/artist/<name>/view_songs', methods=['POST'])
 @login_required
 def view_songs(name):
+    template = FireBaseTemplate()
     email = request.form.get('email')
-    bucket_name = "haydens-music-" + re.sub(r'[^a-z0-9-_]', '', email.lower()) + '-songs'
-    create_bucket_if_not_exists(bucket_name)
-    credentials = Credentials.from_service_account_file('training-project-388915-firebase-adminsdk-7tfwk-7384b5f0ef.json')
-    storage_client = storage.Client(credentials=credentials)
-    bucket = storage_client.bucket(bucket_name)
-    blobs = bucket.list_blobs()
-    songs = []
-    for blob in blobs:
-        song = {}
-        song['name'] = blob.name
-        song['metadata'] = blob.metadata
-        song['url'] = blob.generate_signed_url(
-            version='v4',
-            expiration=datetime.datetime.utcnow() + timedelta(minutes=5),
-            method='GET'
-        )
-        songs.append(song)
+    bucket = template.get_song_bucket(email)
+    songs = template.get_songs_from_bucket(bucket)
     return render_template('view_songs.html', name=name, songs=songs, email=email)
-
 
 @app.route('/artist/<name>/view_images', methods=['POST'])
 @login_required
 def view_images(name):
-    email = request.form.get('email')
-    bucket_name = "haydens-music-" + re.sub(r'[^a-z0-9-_]', '', email.lower()) + '-images'
-    create_bucket_if_not_exists(bucket_name)
-    credentials = Credentials.from_service_account_file('training-project-388915-firebase-adminsdk-7tfwk-7384b5f0ef.json')
-    storage_client = storage.Client(credentials=credentials)
-    bucket = storage_client.bucket(bucket_name)
-    blobs = bucket.list_blobs()
-    images = []
-    for blob in blobs:
-        image = {}
-        image['name'] = blob.name
-        image['metadata'] = blob.metadata
-        image['url'] = blob.generate_signed_url(
-            version='v4',
-            expiration=datetime.datetime.utcnow() + timedelta(minutes=5),
-            method='GET'
-        )
-        images.append(image)
+    template = FireBaseTemplate()
+    bucket = template.get_image_bucket(request.form.get('email'))
+    images = template.get_images_from_bucket(bucket)
     return render_template('view_images.html', name=name, images=images)
 
 @app.route('/post_message', methods=['POST'])
@@ -303,44 +239,18 @@ def add_rating():
     rating = request.form.get('rating')
     song_title = request.form.get('song_title')
     review = request.form.get('review')
-    email = request.form.get('email')
-    bucket_name = "haydens-music-" + re.sub(r'[^a-z0-9-_]', '', email.lower()) + '-songs'
-    credentials = Credentials.from_service_account_file('training-project-388915-firebase-adminsdk-7tfwk-7384b5f0ef.json')
-    storage_client = storage.Client(credentials=credentials)
-    bucket = storage_client.bucket(bucket_name)
-    blobs = bucket.list_blobs()
-    for blob in blobs:
-        if blob.metadata["song_title"] == song_title:
-            metadata = blob.metadata or {}
-            if "reviews" in metadata:
-                metadata_reviews = ast.literal_eval(metadata.get("reviews"))
-                metadata_reviews[current_user.id] = [rating, review]
-                metadata['reviews'] = metadata_reviews
-            else:
-                metadata['reviews'] = {current_user.id:[rating, review]}
-            summed = 0
-            reviews = metadata["reviews"]
-            for review in reviews:
-                summed += float(reviews[review][0])
-            metadata["average_rating"] = summed / len(reviews) 
-            blob.metadata = metadata
-            blob.patch()
+    template = FireBaseTemplate()
+    bucket = template.get_song_bucket(request.form.get('email'))
+    template.add_rating_to_song(rating, song_title, review, bucket)
     return redirect('/dash')
 
 @app.route('/reviews/<song_id>', methods=['POST'])
 def view_reviews(song_id):
     email = request.form.get('email')
     song_title = request.form.get('song_title')
-    bucket_name = "haydens-music-" + re.sub(r'[^a-z0-9-_]', '', email.lower()) + '-songs'
-    credentials = Credentials.from_service_account_file('training-project-388915-firebase-adminsdk-7tfwk-7384b5f0ef.json')
-    storage_client = storage.Client(credentials=credentials)
-    bucket = storage_client.bucket(bucket_name)
-    blobs = bucket.list_blobs()
-    for blob in blobs:
-        if blob.metadata["song_title"] == song_title:
-            metadata = blob.metadata or {}
-            if "reviews" in metadata:
-                reviews = ast.literal_eval(metadata.get("reviews")).values()
+    template = FireBaseTemplate()
+    bucket = template.get_song_bucket(email)
+    reviews = template.get_reviews_from_song(bucket, song_title)
     return render_template('reviews.html', email=email, song_title=song_title, reviews=reviews)
 
 if __name__ == "__main__":
