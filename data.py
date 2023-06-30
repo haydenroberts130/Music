@@ -13,6 +13,11 @@ from google.oauth2.service_account import Credentials
 import json
 import ast
 
+#firestore details
+cred = credentials.Certificate('training-project-388915-firebase-adminsdk-7tfwk-7384b5f0ef.json')
+firebase_admin.initialize_app(cred)
+db = firestore.client()
+
 class FireBaseTemplate():
     def __init__(self):
         self._key = 'training-project-388915-firebase-adminsdk-7tfwk-7384b5f0ef.json'
@@ -133,6 +138,33 @@ class User(UserMixin):
     
     def get_id(self):
         return self.id
+
+class UserManagement():
+
+    def __init__(self):
+        pass
+
+    def hash_password(self, password):
+        hash_object = hashlib.sha256(password.encode())
+        hashed_password = hash_object.hexdigest()
+        return hashed_password
+
+    def validate_credentials(self, email, password, role):
+        if role == 'artist':
+            users_ref = db.collection('artists')
+        elif role == 'fan':
+            users_ref = db.collection('fans')
+        else:
+            return False
+        query = users_ref.where('email', '==', email).limit(1).get()
+        for doc in query:
+            user_data = doc.to_dict()
+            stored_password = user_data.get('password')
+            if stored_password == self.hash_password(password):
+                return True
+        return False
+    
+    
 
 class Artist:
     def __init__(self, name, email, password, genres, description):

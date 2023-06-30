@@ -13,34 +13,9 @@ def load_user(user_id):
     user = User(user_id)
     return user
 
-#firestore details
-cred = credentials.Certificate('training-project-388915-firebase-adminsdk-7tfwk-7384b5f0ef.json')
-firebase_admin.initialize_app(cred)
-db = firestore.client()
-
 @app.route('/')
 def home():
     return render_template('home.html')
-
-def hash_password(password):
-    hash_object = hashlib.sha256(password.encode())
-    hashed_password = hash_object.hexdigest()
-    return hashed_password
-
-def validate_credentials(email, password, role):
-    if role == 'artist':
-        users_ref = db.collection('artists')
-    elif role == 'fan':
-        users_ref = db.collection('fans')
-    else:
-        return False
-    query = users_ref.where('email', '==', email).limit(1).get()
-    for doc in query:
-        user_data = doc.to_dict()
-        stored_password = user_data.get('password')
-        if stored_password == hash_password(password):
-            return True
-    return False
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -48,7 +23,8 @@ def login():
         email = request.form['email']
         password = request.form['password']
         role = request.form['role']
-        if validate_credentials(email, password, role):
+        manager = UserManagement()
+        if manager.validate_credentials(email, password, role):
             user = User(email)
             login_user(user)
             return redirect('/dash')
@@ -62,7 +38,8 @@ def register():
         email = request.form['email']
         password = request.form['password']
         role = request.form['role']
-        hashed_password = hash_password(password)
+        manager = UserManagement()
+        hashed_password = manager.hash_password(password)
         if role == 'artist':
             genres = request.form.getlist('genres[]')
             description = request.form['description']
