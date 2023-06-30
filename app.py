@@ -120,36 +120,14 @@ def view_images(name):
 
 @app.route('/post_message', methods=['POST'])
 def post_message():
-    message = request.form.get('message')
-    email = request.form.get('email')
-    current_date_time = datetime.datetime.now()
-    formatted_date = current_date_time.strftime("%B %d, %Y %I:%M %p")
-    query = db.collection('artists').where('email', '==', email)
-    artist_docs = query.get()
-    if artist_docs:
-        for artist_doc in artist_docs:
-            if 'messages' in artist_doc.to_dict():
-                messages = artist_doc.get('messages')
-            else:
-                messages = []
-            messages.append({
-                'message': message,
-                'timestamp': formatted_date
-            })
-            artist_doc.reference.update({'messages': messages})
+    manager = MessageManager(request.form.get('email'))
+    manager.post_message(request.form.get('message'))
     return redirect('/dash')
 
 @app.route('/artist/<name>/view_messages', methods=['POST'])
 def view_messages(name):
-    email = request.form.get('email')
-    query = db.collection('artists').where('email', '==', email)
-    artist_docs = query.get()
-    messages = []
-    if artist_docs:
-        for artist_doc in artist_docs:
-           if 'messages' in artist_doc.to_dict():
-                artist_messages = artist_doc.to_dict()['messages']
-                messages.extend(artist_messages)
+    manager = MessageManager(request.form.get('email'))
+    messages = manager.get_messages()
     return render_template('view_messages.html', messages=messages, name=name)
 
 @app.route('/follow_artist', methods=['POST'])

@@ -140,7 +140,6 @@ class User(UserMixin):
         return self.id
 
 class UserManagement():
-
     def __init__(self):
         pass
 
@@ -212,6 +211,38 @@ class Artist:
             'genres': self.genres,
             'description': self.description
         }
+
+class MessageManager():
+    def __init__(self, email):
+        self.email = email
+    
+    def post_message(self, message):
+        current_date_time = datetime.datetime.now()
+        formatted_date = current_date_time.strftime("%B %d, %Y %I:%M %p")
+        query = db.collection('artists').where('email', '==', self.email)
+        artist_docs = query.get()
+        if artist_docs:
+            for artist_doc in artist_docs:
+                if 'messages' in artist_doc.to_dict():
+                    messages = artist_doc.get('messages')
+                else:
+                    messages = []
+                messages.append({
+                    'message': message,
+                    'timestamp': formatted_date
+                })
+                artist_doc.reference.update({'messages': messages})
+    
+    def get_messages(self):
+        query = db.collection('artists').where('email', '==', self.email)
+        artist_docs = query.get()
+        messages = []
+        if artist_docs:
+            for artist_doc in artist_docs:
+                if 'messages' in artist_doc.to_dict():
+                        artist_messages = artist_doc.to_dict()['messages']
+                        messages.extend(artist_messages)
+        return messages
 
 class Fan:
     def __init__(self, email, password):
