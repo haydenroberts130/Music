@@ -14,13 +14,13 @@ import json
 import ast
 
 #firestore details
-cred = credentials.Certificate('training-project-388915-firebase-adminsdk-7tfwk-7384b5f0ef.json')
+cred = credentials.Certificate('credential string')
 firebase_admin.initialize_app(cred)
 db = firestore.client()
 
 class BucketManager():
     def __init__(self):
-        self._key = 'training-project-388915-firebase-adminsdk-7tfwk-7384b5f0ef.json'
+        self._key = 'json key'
         self._credentials = Credentials.from_service_account_file(self._key)
         self._storage_client = storage.Client(credentials=self._credentials)
     
